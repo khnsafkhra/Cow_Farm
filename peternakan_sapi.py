@@ -1,50 +1,106 @@
+import time
 
-import streamlit as st
+class Cow:
+    def __init__(self):
+        self.hungry = True
+        self.sick = False
+    
+    def feed(self):
+        self.hungry = False
+    
+    def pass_day(self):
+        # Jika tidak diberi makan, sapi jadi lapar lagi dan bisa sakit
+        if self.hungry:
+            self.sick = True
+        else:
+            self.sick = False
+        self.hungry = True
 
-st.set_page_config(page_title="Peternakan Sapi", page_icon="🐮", layout="centered")
+    def produce_milk(self):
+        if not self.hungry and not self.sick:
+            return 1  # liter susu
+        else:
+            return 0
 
-st.title("🐮 Game Peternakan Sapi")
-st.markdown("Selamat datang di peternakan sapi kamu! Rawat sapimu dan jadikan peternakanmu sukses.")
+class Farm:
+    def __init__(self):
+        self.cows = [Cow()]
+        self.milk = 0
+        self.money = 10
+        self.feed_stock = 5
 
-if "sapi" not in st.session_state:
-    st.session_state.sapi = 1
-    st.session_state.makanan = 10
-    st.session_state.susu = 0
+    def feed_cows(self):
+        if self.feed_stock >= len(self.cows):
+            for cow in self.cows:
+                cow.feed()
+            self.feed_stock -= len(self.cows)
+            print("Sapi sudah diberi makan.")
+        else:
+            print("Pakan tidak cukup!")
 
-col1, col2, col3 = st.columns(3)
-col1.metric("Jumlah Sapi", st.session_state.sapi)
-col2.metric("Stok Makanan", st.session_state.makanan)
-col3.metric("Susu Terkumpul", st.session_state.susu)
+    def sell_milk(self):
+        price_per_liter = 5
+        total_milk = sum(cow.produce_milk() for cow in self.cows)
+        self.money += total_milk * price_per_liter
+        print(f"Menjual {total_milk} liter susu, dapat {total_milk * price_per_liter} uang.")
+        self.milk = 0  # setelah jual, susu habis
 
-st.divider()
+    def buy_feed(self, amount):
+        cost_per_feed = 2
+        total_cost = amount * cost_per_feed
+        if self.money >= total_cost:
+            self.feed_stock += amount
+            self.money -= total_cost
+            print(f"Berhasil beli {amount} pakan.")
+        else:
+            print("Uang tidak cukup untuk beli pakan!")
 
-st.subheader("🍼 Beri Makan Sapi")
-if st.button("Beri Makan"):
-    if st.session_state.makanan >= st.session_state.sapi:
-        st.session_state.makanan -= st.session_state.sapi
-        st.success("Semua sapi kenyang dan bahagia!")
-    else:
-        st.warning("Makanan tidak cukup!")
+    def buy_cow(self):
+        cost_cow = 20
+        if self.money >= cost_cow:
+            self.cows.append(Cow())
+            self.money -= cost_cow
+            print("Beli sapi baru!")
+        else:
+            print("Uang tidak cukup untuk beli sapi!")
 
-st.subheader("🐄 Perah Sapi")
-if st.button("Perah Susu"):
-    st.session_state.susu += st.session_state.sapi
-    st.success(f"Berhasil memerah {st.session_state.sapi} susu.")
+    def next_day(self):
+        for cow in self.cows:
+            cow.pass_day()
+        print(f"Hari berikutnya... Kamu punya {len(self.cows)} sapi, {self.feed_stock} pakan, uang {self.money}.")
 
-st.subheader("🌾 Tambah Makanan")
-if st.button("Beli 10 makanan (2 susu)"):
-    if st.session_state.susu >= 2:
-        st.session_state.susu -= 2
-        st.session_state.makanan += 10
-        st.success("Kamu membeli 10 makanan.")
-    else:
-        st.warning("Susu tidak cukup untuk membeli makanan.")
+def main():
+    farm = Farm()
+    day = 1
+    while True:
+        print(f"\n=== Hari ke-{day} ===")
+        print(f"Uang: {farm.money}, Pakan: {farm.feed_stock}, Jumlah sapi: {len(farm.cows)}")
+        print("Pilihan:")
+        print("1. Beri makan sapi")
+        print("2. Jual susu")
+        print("3. Beli pakan")
+        print("4. Beli sapi")
+        print("5. Lewatkan hari")
+        print("6. Keluar")
 
-st.subheader("🐮 Tambah Sapi")
-if st.button("Beli 1 sapi (10 susu)"):
-    if st.session_state.susu >= 10:
-        st.session_state.susu -= 10
-        st.session_state.sapi += 1
-        st.success("Kamu membeli 1 sapi baru!")
-    else:
-        st.warning("Susu tidak cukup untuk membeli sapi.")
+        choice = input("Pilihanmu: ")
+        if choice == "1":
+            farm.feed_cows()
+        elif choice == "2":
+            farm.sell_milk()
+        elif choice == "3":
+            amount = int(input("Beli berapa pakan? "))
+            farm.buy_feed(amount)
+        elif choice == "4":
+            farm.buy_cow()
+        elif choice == "5":
+            farm.next_day()
+            day += 1
+        elif choice == "6":
+            print("Game selesai.")
+            break
+        else:
+            print("Pilihan tidak valid.")
+
+if __name__ == "__main__":
+    main()
