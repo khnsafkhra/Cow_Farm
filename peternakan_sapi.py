@@ -1,124 +1,95 @@
-import pygame
-import os
+import streamlit as st
 
-# Inisialisasi Pygame
-pygame.init()
+# Inisialisasi state dengan session_state agar data tetap ada saat refresh tombol
+if 'money' not in st.session_state:
+    st.session_state.money = 100
+if 'cows' not in st.session_state:
+    st.session_state.cows = 1
+if 'milk' not in st.session_state:
+    st.session_state.milk = 0
+if 'food' not in st.session_state:
+    st.session_state.food = 5
+if 'barn_level' not in st.session_state:
+    st.session_state.barn_level = 1
+if 'day' not in st.session_state:
+    st.session_state.day = 1
 
-# Ukuran layar
-WIDTH, HEIGHT = 800, 600
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Game Peternakan Sapi")
+st.title("🐄 Game Peternakan Sapi (Streamlit Edition)")
 
-# Warna
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-GREEN = (150, 200, 100)
+st.write(f"**Hari:** {st.session_state.day}")
+st.write(f"**Uang:** ${st.session_state.money}")
+st.write(f"**Jumlah Sapi:** {st.session_state.cows}")
+st.write(f"**Jumlah Susu:** {st.session_state.milk}")
+st.write(f"**Jumlah Makanan:** {st.session_state.food}")
+st.write(f"**Level Kandang:** {st.session_state.barn_level}")
 
-# FPS
-clock = pygame.time.Clock()
-FPS = 60
-
-# Load gambar (placeholder grafis kartun)
-cow_image = pygame.Surface((80, 80))
-cow_image.fill((255, 255, 255))
-pygame.draw.circle(cow_image, (0, 0, 0), (40, 40), 30)  # kepala
-
-background = pygame.Surface((WIDTH, HEIGHT))
-background.fill(GREEN)
-
-# Font
-font = pygame.font.SysFont(None, 36)
-
-# Data Game
-money = 100
-cows = 1
-milk = 0
-food = 5
-barn_level = 1
-day = 1
-time_counter = 0
-
-# Fungsi menggambar teks
-def draw_text(text, x, y, color=BLACK):
-    img = font.render(text, True, color)
-    screen.blit(img, (x, y))
-
-# Fungsi logika produksi susu
 def produce_milk():
-    global milk, food
-    if food >= cows:
-        milk += cows * 2
-        food -= cows
+    needed_food = st.session_state.cows
+    if st.session_state.food >= needed_food:
+        st.session_state.milk += st.session_state.cows * 2
+        st.session_state.food -= needed_food
+        st.success(f"Sapi memproduksi susu sebanyak {st.session_state.cows * 2} liter!")
+    else:
+        st.warning("Makanan sapi tidak cukup untuk produksi susu.")
 
-# Fungsi jual susu
 def sell_milk():
-    global milk, money
-    money += milk * 5
-    milk = 0
+    if st.session_state.milk > 0:
+        income = st.session_state.milk * 5
+        st.session_state.money += income
+        st.session_state.milk = 0
+        st.success(f"Kamu menjual susu dan mendapatkan ${income}.")
+    else:
+        st.info("Tidak ada susu untuk dijual.")
 
-# Fungsi beli makanan
 def buy_food():
-    global money, food
-    if money >= 10:
-        money -= 10
-        food += 5
+    cost = 10
+    amount = 5
+    if st.session_state.money >= cost:
+        st.session_state.money -= cost
+        st.session_state.food += amount
+        st.success(f"Kamu membeli {amount} makanan seharga ${cost}.")
+    else:
+        st.warning("Uang tidak cukup untuk membeli makanan.")
 
-# Fungsi beli sapi
 def buy_cow():
-    global money, cows
-    if money >= 50:
-        money -= 50
-        cows += 1
+    cost = 50
+    if st.session_state.money >= cost:
+        st.session_state.money -= cost
+        st.session_state.cows += 1
+        st.success("Kamu membeli seekor sapi baru!")
+    else:
+        st.warning("Uang tidak cukup untuk membeli sapi.")
 
-# Fungsi upgrade kandang
 def upgrade_barn():
-    global money, barn_level
-    if money >= 100:
-        money -= 100
-        barn_level += 1
+    cost = 100
+    if st.session_state.money >= cost:
+        st.session_state.money -= cost
+        st.session_state.barn_level += 1
+        st.success("Kandang berhasil diupgrade!")
+    else:
+        st.warning("Uang tidak cukup untuk upgrade kandang.")
 
-# Game Loop
-running = True
-while running:
-    screen.blit(background, (0, 0))
+def next_day():
+    st.session_state.day += 1
+    st.info(f"Hari {st.session_state.day} dimulai!")
 
-    # Gambar sapi
-    for i in range(cows):
-        x = 100 + (i % 5) * 100
-        y = 200 + (i // 5) * 100
-        screen.blit(cow_image, (x, y))
+# Tombol aksi
+col1, col2, col3 = st.columns(3)
 
-    # HUD
-    draw_text(f"Uang: ${money}", 10, 10)
-    draw_text(f"Susu: {milk}", 10, 50)
-    draw_text(f"Makanan: {food}", 10, 90)
-    draw_text(f"Sapi: {cows}", 10, 130)
-    draw_text(f"Kandang Lv: {barn_level}", 10, 170)
-    draw_text(f"Hari: {day}", 10, 210)
+with col1:
+    if st.button("🍼 Beri Makan Sapi (Produksi Susu)"):
+        produce_milk()
+    if st.button("💰 Jual Susu"):
+        sell_milk()
 
-    # Event
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        elif event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_m:
-                produce_milk()
-            elif event.key == pygame.K_s:
-                sell_milk()
-            elif event.key == pygame.K_f:
-                buy_food()
-            elif event.key == pygame.K_c:
-                buy_cow()
-            elif event.key == pygame.K_u:
-                upgrade_barn()
+with col2:
+    if st.button("🍎 Beli Makanan ($10)"):
+        buy_food()
+    if st.button("🐄 Beli Sapi ($50)"):
+        buy_cow()
 
-    # Sistem waktu (naik hari tiap 10 detik)
-    time_counter += 1
-    if time_counter >= FPS * 10:
-        day += 1
-        time_counter = 0
-
-    pygame.display.flip()
-    clock.tick(FPS)
-
-pygame.quit()
+with col3:
+    if st.button("🏠 Upgrade Kandang ($100)"):
+        upgrade_barn()
+    if st.button("⏭ Next Day"):
+        next_day()
