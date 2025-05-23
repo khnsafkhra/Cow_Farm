@@ -1,106 +1,63 @@
-import time
+import pygame
 
-class Cow:
-    def __init__(self):
-        self.hungry = True
-        self.sick = False
-    
-    def feed(self):
-        self.hungry = False
-    
-    def pass_day(self):
-        # Jika tidak diberi makan, sapi jadi lapar lagi dan bisa sakit
-        if self.hungry:
-            self.sick = True
-        else:
-            self.sick = False
-        self.hungry = True
+# Inisialisasi Pygame
+pygame.init()
 
-    def produce_milk(self):
-        if not self.hungry and not self.sick:
-            return 1  # liter susu
-        else:
-            return 0
+# Ukuran layar
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Game Peternakan Sapi")
 
-class Farm:
-    def __init__(self):
-        self.cows = [Cow()]
-        self.milk = 0
-        self.money = 10
-        self.feed_stock = 5
+# Warna
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
 
-    def feed_cows(self):
-        if self.feed_stock >= len(self.cows):
-            for cow in self.cows:
-                cow.feed()
-            self.feed_stock -= len(self.cows)
-            print("Sapi sudah diberi makan.")
-        else:
-            print("Pakan tidak cukup!")
+# FPS
+clock = pygame.time.Clock()
+FPS = 60
 
-    def sell_milk(self):
-        price_per_liter = 5
-        total_milk = sum(cow.produce_milk() for cow in self.cows)
-        self.money += total_milk * price_per_liter
-        print(f"Menjual {total_milk} liter susu, dapat {total_milk * price_per_liter} uang.")
-        self.milk = 0  # setelah jual, susu habis
+# Gambar latar dan sapi (sementara kotak putih)
+background = pygame.Surface((WIDTH, HEIGHT))
+background.fill((150, 200, 100))  # Hijau rumput
 
-    def buy_feed(self, amount):
-        cost_per_feed = 2
-        total_cost = amount * cost_per_feed
-        if self.money >= total_cost:
-            self.feed_stock += amount
-            self.money -= total_cost
-            print(f"Berhasil beli {amount} pakan.")
-        else:
-            print("Uang tidak cukup untuk beli pakan!")
+cow_image = pygame.Surface((80, 80))
+cow_image.fill((255, 255, 255))  # Sapi putih kotak
 
-    def buy_cow(self):
-        cost_cow = 20
-        if self.money >= cost_cow:
-            self.cows.append(Cow())
-            self.money -= cost_cow
-            print("Beli sapi baru!")
-        else:
-            print("Uang tidak cukup untuk beli sapi!")
+# Data game
+money = 100
+cows = 1
+milk = 0
+day = 1
 
-    def next_day(self):
-        for cow in self.cows:
-            cow.pass_day()
-        print(f"Hari berikutnya... Kamu punya {len(self.cows)} sapi, {self.feed_stock} pakan, uang {self.money}.")
+font = pygame.font.SysFont(None, 36)
 
-def main():
-    farm = Farm()
-    day = 1
-    while True:
-        print(f"\n=== Hari ke-{day} ===")
-        print(f"Uang: {farm.money}, Pakan: {farm.feed_stock}, Jumlah sapi: {len(farm.cows)}")
-        print("Pilihan:")
-        print("1. Beri makan sapi")
-        print("2. Jual susu")
-        print("3. Beli pakan")
-        print("4. Beli sapi")
-        print("5. Lewatkan hari")
-        print("6. Keluar")
+def draw_text(text, x, y, color=BLACK):
+    img = font.render(text, True, color)
+    screen.blit(img, (x, y))
 
-        choice = input("Pilihanmu: ")
-        if choice == "1":
-            farm.feed_cows()
-        elif choice == "2":
-            farm.sell_milk()
-        elif choice == "3":
-            amount = int(input("Beli berapa pakan? "))
-            farm.buy_feed(amount)
-        elif choice == "4":
-            farm.buy_cow()
-        elif choice == "5":
-            farm.next_day()
-            day += 1
-        elif choice == "6":
-            print("Game selesai.")
-            break
-        else:
-            print("Pilihan tidak valid.")
+# Game loop
+running = True
+while running:
+    screen.blit(background, (0, 0))
 
-if __name__ == "__main__":
-    main()
+    # Gambar sapi
+    for i in range(cows):
+        x = 100 + (i % 5) * 100
+        y = 200 + (i // 5) * 100
+        screen.blit(cow_image, (x, y))
+
+    # HUD
+    draw_text(f"Uang: ${money}", 10, 10)
+    draw_text(f"Susu: {milk}", 10, 50)
+    draw_text(f"Sapi: {cows}", 10, 90)
+    draw_text(f"Hari: {day}", 10, 130)
+
+    # Event handling
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    pygame.display.flip()
+    clock.tick(FPS)
+
+pygame.quit()
